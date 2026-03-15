@@ -103,9 +103,8 @@ def line_too_long(line: string, max_len: i32): bool {
 
 /// Try to break a long line at appropriate positions
 def break_long_line(line: string, max_len: i32, indent_level: i32): list(string) {
-    mut result: list(string);
-
     if line.len <= max_len {
+        mut result: list(string);
         append(result, line);
         return result;
     }
@@ -125,48 +124,58 @@ def break_long_line(line: string, max_len: i32, indent_level: i32): list(string)
     val indent: string = substring_se(line, 0, leading_spaces);
     val continuation_indent: string = concat_c(indent, "    ");
 
-    mut pos: i32 = 0;
-    mut last_break_pos: i32 = 0;
+    mut raw_segments: list(string);
+    mut segment_start: i32 = 0;
+    mut last_break_pos: i32 = -1;
     mut in_string: bool = false;
-    mut escape_next: bool = false;
+    mut escaped: bool = false;
+    mut i: i32 = 0;
 
     loop {
-        if pos >= line.len {
+        if i >= line.len {
             break;
         }
+        val ch: char = get_char(line, i);
 
-        val ch: char = get_char(line, pos);
-
-        if escape_next {
-            escape_next = false;
-            pos = pos + 1;
+        if escaped {
+            escaped = false;
         } elif ch == '\\' and in_string {
-            escape_next = true;
-            pos = pos + 1;
+            escaped = true;
         } elif ch == '"' {
             in_string = !in_string;
-            pos = pos + 1;
-        } elif !in_string and (ch == ',' or ch == ';' or ch == '{' or ch == '(' or ch == '[') {
-            last_break_pos = pos + 1;
-            pos = pos + 1;
-        } else {
-            pos = pos + 1;
+        } elif !in_string {
+            if ch == ',' or ch == '(' or ch == '[' or ch == '{' or ch == ' ' {
+                last_break_pos = i;
+            }
         }
 
-        if pos - (result.len * max_len) > max_len and last_break_pos > 0 and !in_string {
-            val segment: string = substring_se(line, result.len * max_len, last_break_pos);
-            append(result, strip_trailing_whitespace(segment));
-            last_break_pos = 0;
+        if i - segment_start >= max_len and last_break_pos != -1 {
+            val segment: string = substring_se(line, segment_start, last_break_pos + 1);
+            append(raw_segments, strip_trailing_whitespace(segment));
+            segment_start = last_break_pos + 1;
+            last_break_pos = -1;
         }
+        i = i + 1;
     }
 
-    if result.len == 0 {
-        append(result, line);
-    } else {
-        val final_segment: string = substring_se(line, result.len * max_len, line.len);
-        if final_segment.len > 0 {
-            append(result, concat(continuation_indent, strip_trailing_whitespace(final_segment)));
+    val final_segment: string = substring_se(line, segment_start, line.len);
+    if final_segment.len > 0 {
+        append(raw_segments, strip_trailing_whitespace(final_segment));
+    }
+
+    mut result: list(string);
+    if raw_segments.len > 0 {
+        append(result, raw_segments.data[0]);
+        mut j: i32 = 1;
+        loop {
+            if j >= raw_segments.len {
+                break;
+            }
+            append(result, concat(continuation_indent, raw_segments.data[j]));
+            j = j + 1;
         }
+    } else {
+        append(result, line);
     }
 
     return result;
@@ -303,23 +312,50 @@ def normalize_spacing(line: string): string {
     return trim(result);
 }
 
-/// Format the signature of a function
+/// Improved normalize_spacing focused on signatures, string-aware
 def format_signature(line: string): string {
-    // def read_file (path: string) : string { -> def read_file(path: string): string {
-    mut res: string = replace_all(line, str("( "), str("("));
-    res = replace_all(res, str(" )"), str(")"));
-    res = replace_all(res, str(" :"), str(":"));
-    res = replace_all(res, str(" ,"), str(","));
-    
-    // Fix "def name (" -> "def name("
-    if starts_with(res, str("def ")) or starts_with(res, str("pub def ")) {
-        val paren_pos: i32 = find_substr(res, str(" ("));
-        if paren_pos != -1 {
-            // Only if it's before the first '('
-            res = replace_all(res, str(" ("), str("("));
+    mut res: string = str("");
+    mut in_string: bool = false;
+    mut escaped: bool = false;
+    mut i: i32 = 0;
+    loop {
+        if i >= line.len {
+            break;
         }
+        val ch: char = get_char(line, i);
+        if escaped {
+            res = concat_chr(res, ch);
+            escaped = false;
+        } elif ch == '\\' and in_string {
+            res = concat_chr(res, ch);
+            escaped = true;
+        } elif ch == '"' {
+            in_string = !in_string;
+            res = concat_chr(res, ch);
+        } elif in_string {
+            res = concat_chr(res, ch);
+        } else {
+            if ch == ' ' and i + 1 < line.len {
+                val next: char = get_char(line, i + 1);
+                if next == ')' or next == ':' or next == ',' or next == '(' {
+                    // skip space before these tokens
+                } else {
+                    res = concat_chr(res, ch);
+                }
+            } elif ch == '(' and i + 1 < line.len {
+                val next: char = get_char(line, i + 1);
+                if next == ' ' {
+                    res = concat_chr(res, '(');
+                    i = i + 1; // skip space after (
+                } else {
+                    res = concat_chr(res, ch);
+                }
+            } else {
+                res = concat_chr(res, ch);
+            }
+        }
+        i = i + 1;
     }
-    
     return res;
 }
 def format_content(content: string, max_line_length: i32): string {
