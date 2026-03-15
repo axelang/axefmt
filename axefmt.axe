@@ -313,6 +313,45 @@ def normalize_spacing(line: string): string {
     return trim(result);
 }
 
+def get_last_word(s: string): string {
+    mut end: i32 = s.len;
+    loop {
+        if end <= 0 {
+            break;
+        }
+        val ch: char = get_char(s, end - 1);
+        if ch == ' ' 
+            or ch == '\t' 
+            or ch == '{' 
+            or ch == '}' 
+            or ch == '(' 
+            or ch == ')' 
+            or ch == ';' 
+            or ch == '='    
+            or ch == '<' 
+            or ch == '>' 
+            or ch == '+' 
+            or ch == '-' 
+            or ch == '*' 
+            or ch == '/' 
+            or ch == ',' 
+            or ch == ':' {
+            break;
+        }
+        end = end - 1;
+    }
+    return substring_se(s, end, s.len);
+}
+
+def is_control_keyword(word: string): bool {
+    return compare(word, str("if")) == 0 or
+           compare(word, str("elif")) == 0 or
+           compare(word, str("while")) == 0 or
+           compare(word, str("for")) == 0 or
+           compare(word, str("match")) == 0 or
+           compare(word, str("return")) == 0;
+}
+
 /// Improved normalize_spacing focused on signatures, string-aware and comment-aware
 def format_signature(line: string): string {
     mut res: string = str("");
@@ -336,10 +375,8 @@ def format_signature(line: string): string {
         } elif in_string {
             res = concat_chr(res, ch);
         } else {
-            // Check for comment start
             if ch == '/' and i + 1 < line.len {
                 if get_char(line, i + 1) == '/' {
-                    // Rest of the line is a comment, keep it as is
                     res = concat(res, substring_se(line, i, line.len));
                     break;
                 }
@@ -347,8 +384,13 @@ def format_signature(line: string): string {
 
             if ch == ' ' and i + 1 < line.len {
                 val next: char = get_char(line, i + 1);
-                if next == ')' or next == ':' or next == ',' or next == '(' {
-                    // skip space before these tokens
+                if next == ')' or next == ':' or next == ',' {
+                    // Skip space before these tokens
+                } elif next == '(' {
+                    val last_word: string = get_last_word(res);
+                    if is_control_keyword(last_word) {
+                        res = concat_chr(res, ch);
+                    }
                 } else {
                     res = concat_chr(res, ch);
                 }
@@ -356,7 +398,7 @@ def format_signature(line: string): string {
                 val next: char = get_char(line, i + 1);
                 if next == ' ' {
                     res = concat_chr(res, '(');
-                    i = i + 1; // skip space after (
+                    i++;
                 } else {
                     res = concat_chr(res, ch);
                 }
@@ -364,7 +406,7 @@ def format_signature(line: string): string {
                 res = concat_chr(res, ch);
             }
         }
-        i = i + 1;
+        i++;
     }
     return res;
 }
