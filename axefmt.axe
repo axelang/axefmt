@@ -428,9 +428,9 @@ def format_content(content: string, max_line_length: i32): string {
         val is_decl: bool = starts_with(trimmed, strdef) 
             or starts_with(trimmed, str("model ")) 
             or starts_with(trimmed, str("pub "));
-        val is_comment: bool = starts_with(trimmed, str("///")) or starts_with(trimmed, str("//"));
+        val is_docstring: bool = starts_with(trimmed, str("///"));
 
-        if (is_decl or is_comment) and formatted_lines.len > 0 {
+        if (is_decl or is_docstring) and formatted_lines.len > 0 {
             if !last_was_empty {
                 mut prev_is_comment: bool = false;
                 val prev_line_raw: string = formatted_lines.data[formatted_lines.len - 1];
