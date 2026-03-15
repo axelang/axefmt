@@ -59,8 +59,7 @@ def main() {
             }
         }
 
-        println "";
-        println $"Formatted {success_count} file(s) successfully.";
+        println $"\nFormatted {success_count} file(s) successfully.";
         if fail_count > 0 {
             println $"Failed to format {fail_count} file(s).";
         }
