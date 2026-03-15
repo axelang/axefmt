@@ -558,8 +558,8 @@ pub def format_file(path: string, max_line_length: i32): bool {
     }
 
     val final_content: string = format_content(content, max_line_length);
-
     val success: bool = write_file(path, final_content);
+
     if success {
         println $"Successfully formatted: {path}";
     } else {
