@@ -320,21 +320,21 @@ def get_last_word(s: string): string {
             break;
         }
         val ch: char = get_char(s, end - 1);
-        if ch == ' ' 
-            or ch == '\t' 
-            or ch == '{' 
-            or ch == '}' 
-            or ch == '(' 
-            or ch == ')' 
-            or ch == ';' 
-            or ch == '='    
-            or ch == '<' 
-            or ch == '>' 
-            or ch == '+' 
-            or ch == '-' 
-            or ch == '*' 
-            or ch == '/' 
-            or ch == ',' 
+        if ch == ' '
+            or ch == '\t'
+            or ch == '{'
+            or ch == '}'
+            or ch == '('
+            or ch == ')'
+            or ch == ';'
+            or ch == '='
+            or ch == '<'
+            or ch == '>'
+            or ch == '+'
+            or ch == '-'
+            or ch == '*'
+            or ch == '/'
+            or ch == ','
             or ch == ':' {
             break;
         }
@@ -468,8 +468,8 @@ def format_content(content: string, max_line_length: i32): string {
         }
 
         val strdef: string = str("def ");
-        val is_decl: bool = starts_with(trimmed, strdef) 
-            or starts_with(trimmed, str("model ")) 
+        val is_decl: bool = starts_with(trimmed, strdef)
+            or starts_with(trimmed, str("model "))
             or starts_with(trimmed, str("pub "));
         val is_docstring: bool = starts_with(trimmed, str("///"));
 
@@ -500,6 +500,7 @@ def format_content(content: string, max_line_length: i32): string {
         }
 
         line = format_signature(line);
+        line = strip_trailing_whitespace(line);
 
         if line.len > max_line_length {
             val broken: list(string) = break_long_line(line, max_line_length, 0);
