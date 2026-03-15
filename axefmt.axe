@@ -423,6 +423,27 @@ def format_content(content: string, max_line_length: i32): string {
             k = k + 1;
             continue;
         }
+
+        val strdef: string = str("def ");
+        val is_decl: bool = starts_with(trimmed, strdef) 
+            or starts_with(trimmed, str("model ")) 
+            or starts_with(trimmed, str("pub "));
+        val is_comment: bool = starts_with(trimmed, str("///")) or starts_with(trimmed, str("//"));
+
+        if (is_decl or is_comment) and formatted_lines.len > 0 {
+            if !last_was_empty {
+                mut prev_is_comment: bool = false;
+                val prev_line_raw: string = formatted_lines.data[formatted_lines.len - 1];
+                val prev_line: string = trim(prev_line_raw);
+                if starts_with(prev_line, str("//")) or starts_with(prev_line, str("///")) {
+                    prev_is_comment = true;
+                }
+
+                if !prev_is_comment {
+                    append(formatted_lines, str(""));
+                }
+            }
+        }
         last_was_empty = false;
 
         if compare(trimmed, str("}")) == 0 and k + 1 < other_lines.len {
