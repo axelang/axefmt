@@ -410,6 +410,7 @@ def format_signature(line: string): string {
     }
     return res;
 }
+
 def format_content(content: string, max_line_length: i32): string {
     val lines: list(string) = split_lines(content);
     mut use_statements: list(string);
