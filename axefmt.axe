@@ -1,6 +1,7 @@
 use std.io;
-use std.string;
 use std.lists;
+use std.string;
+
 
 /// Read entire file into a string
 def read_file(path: string): string {
@@ -312,7 +313,7 @@ def normalize_spacing(line: string): string {
     return trim(result);
 }
 
-/// Improved normalize_spacing focused on signatures, string-aware
+/// Improved normalize_spacing focused on signatures, string-aware and comment-aware
 def format_signature(line: string): string {
     mut res: string = str("");
     mut in_string: bool = false;
@@ -335,6 +336,15 @@ def format_signature(line: string): string {
         } elif in_string {
             res = concat_chr(res, ch);
         } else {
+            // Check for comment start
+            if ch == '/' and i + 1 < line.len {
+                if get_char(line, i + 1) == '/' {
+                    // Rest of the line is a comment, keep it as is
+                    res = concat(res, substring_se(line, i, line.len));
+                    break;
+                }
+            }
+
             if ch == ' ' and i + 1 < line.len {
                 val next: char = get_char(line, i + 1);
                 if next == ')' or next == ':' or next == ',' or next == '(' {
@@ -382,7 +392,7 @@ def format_content(content: string, max_line_length: i32): string {
     sort_string_list(addr(use_statements));
 
     mut formatted_lines: list(string);
-    
+
     mut j: i32 = 0;
     loop {
         if j >= use_statements.len {
@@ -417,7 +427,8 @@ def format_content(content: string, max_line_length: i32): string {
 
         if compare(trimmed, str("}")) == 0 and k + 1 < other_lines.len {
             val next_trimmed: string = trim(other_lines.data[k + 1]);
-            if starts_with(next_trimmed, str("else")) or starts_with(next_trimmed, str("elif")) or starts_with(next_trimmed, str("{")) {
+            if starts_with(next_trimmed, str("else")) or starts_with(next_trimmed, str("elif")) or
+                starts_with(next_trimmed, str("{")) {
                 line = concat_c(line, " ");
                 line = concat(line, next_trimmed);
                 k = k + 1;
@@ -482,7 +493,7 @@ def format_file(path: string, max_line_length: i32): bool {
     }
 
     val final_content: string = format_content(content, max_line_length);
-    
+
     val success: bool = write_file(path, final_content);
     if success {
         println $"Successfully formatted: {path}";
