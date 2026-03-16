@@ -380,20 +380,35 @@ pub def format_content(content: string, max_line_length: i32): string {
     mut use_statements: list(string);
     mut other_lines: list(string);
     mut i: i32 = 0;
+    mut brace_depth: i32 = 0;
 
     loop {
         if i >= lines.len {
             break;
         }
         val line: string = trim(lines.data[i]);
-        if starts_with(line, str("use ")) {
+        mut j: i32 = 0;
+        loop {
+            if j >= line.len {
+                break;
+            }
+            val ch: char = get_char(line, j);
+            if ch == '{' {
+                brace_depth = brace_depth + 1;
+            } elif ch == '}' {
+                brace_depth = brace_depth - 1;
+            }
+            j++;
+        }
+
+        if starts_with(line, str("use ")) and brace_depth == 0 {
             append(use_statements, line);
         } elif line.len > 0 {
             append(other_lines, lines.data[i]);
         } else {
             append(other_lines, line);
         }
-        i = i + 1;
+        i++;
     }
 
     sort_string_list(addr(use_statements));
