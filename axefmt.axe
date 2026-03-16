@@ -1,8 +1,7 @@
-use formatter;
+use internal.formatter;
 use std.io;
 use std.lists;
 use std.string;
-
 
 def main() {
     unsafe {

@@ -1,0 +1,39 @@
+use std.io;
+use std.lists;
+use std.string;
+
+/// Read entire file into a string
+def read_file(path: string): string {
+    unsafe {
+        val mode: string = str("rb");
+        val file: ref void = C.fopen(path.data, mode.data);
+        if file == nil {
+            return str("");
+        }
+        C.fseek(file, 0, 2);
+        val size: i32 = cast[i32](C.ftell(file));
+        C.fseek(file, 0, 0);
+        mut buffer: ref char = cast[ref char](C.malloc(cast[u64](size + 1)));
+        C.fread(buffer, 1, cast[u64](size), file);
+        buffer[size] = '\0';
+        C.fclose(file);
+        val result: string = str(buffer);
+        C.free(buffer);
+        return result;
+    }
+}
+
+/// Write string to file
+def write_file(path: string, content: string): bool {
+    unsafe {
+        val mode: string = str("wb");
+        val file: ref void = C.fopen(path.data, mode.data);
+        if file == nil {
+            return false;
+        }
+
+        C.fwrite(content.data, 1, cast[u64](content.len), file);
+        C.fclose(file);
+        return true;
+    }
+}
