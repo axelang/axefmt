@@ -430,6 +430,19 @@ pub def format_content(content: string, max_line_length: i32): string {
     // Pass 2: Process other lines (Braces, Spacing, Function separation)
     mut k: i32 = 0;
     mut last_was_empty: bool = false;
+    if use_statements.len > 0 {
+        loop {
+            if k >= other_lines.len {
+                break;
+            }
+            val trimmed_check: string = trim(other_lines.data[k]);
+            if trimmed_check.len == 0 {
+                k = k + 1;
+            } else {
+                break;
+            }
+        }
+    }
     loop {
         if k >= other_lines.len {
             break;
@@ -454,14 +467,14 @@ pub def format_content(content: string, max_line_length: i32): string {
 
         if (is_decl or is_docstring) and formatted_lines.len > 0 {
             if !last_was_empty {
-                mut prev_is_comment: bool = false;
+                mut prev_is_comment_or_empty: bool = false;
                 val prev_line_raw: string = formatted_lines.data[formatted_lines.len - 1];
                 val prev_line: string = trim(prev_line_raw);
-                if starts_with(prev_line, str("//")) or starts_with(prev_line, str("///")) {
-                    prev_is_comment = true;
+                if prev_line.len == 0 or starts_with(prev_line, str("//")) or starts_with(prev_line, str("///")) {
+                    prev_is_comment_or_empty = true;
                 }
 
-                if !prev_is_comment {
+                if !prev_is_comment_or_empty {
                     append(formatted_lines, str(""));
                 }
             }
